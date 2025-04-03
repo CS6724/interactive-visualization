@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IVLaP Web Version</title>
+  <link rel="stylesheet" href="assets/css/web.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.15/lib/codemirror.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.15/theme/material.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      height: 100%;
+      width: 100%;
+      position: relative;
+    }
+
+    .sidebar-popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 500px;
+      height: 100%;
+      background: #243345;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+
+    .sidebar-popup.open {
+      transform: translateX(0);
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 30px;
+      height: 30px;
+      background: #ccc;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .close-btn:hover {
+      background: #aaa;
+    }
+
+    .open-sidebar-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 999;
+      background: #243345;
+      color: #fff;
+      border: none;
+      padding: 10px 15px;
+      cursor: pointer;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    .content {
+      height: 100%;
+      overflow: auto;
+    }
+
+    .CodeMirror {
+      height: 700px;
+      border: 1px solid #ccc;
+      font-family: monospace;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <!-- <button class="open-sidebar-btn" id="openSidebarBtn">☰ Open Sidebar</button> -->
+
+    <!-- <div class="sidebar-popup" id="sidebarPopup">
+      <div class="close-btn" id="closeSidebar">&times;</div>
+      <h2>IVLaP Web</h2>
+      <form id="diagramControls">
+        <div class="form-group">
+          <textarea id="jsonEditor"></textarea>
+        </div>
+        <div class="button-group">
+          <button type="button" id="updateBtn">Update</button>
+        </div>
+      </form>
+    </div> -->
+
+    <div class="content">
+      <uml-canvas></uml-canvas>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.15/lib/codemirror.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.15/mode/javascript/javascript.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.15/addon/lint/lint.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.15/addon/lint/json-lint.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsonlint@1.6.3/web/jsonlint.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.15/addon/lint/lint.css">
+
+  <!-- <script type="module" src="./index.js"></script> -->
+  <script type="module" src="/src/index.ts"></script>
+  <script>
+    let editor;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      editor = CodeMirror.fromTextArea(document.getElementById('jsonEditor'), {
+        mode: { name: "javascript", json: true },
+        lineNumbers: true,
+        matchBrackets: true,
+        autoCloseBrackets: true,
+        lint: true,
+        gutters: ["CodeMirror-lint-markers"],
+        theme: "material"
+      });
+
+      setTimeout(() => {
+        const currentDiagram = document.querySelector('uml-canvas').getCurrentDiagram();
+        editor.setValue(JSON.stringify(currentDiagram, null, 2));
+      }, 500);
+
+      document.getElementById('updateBtn').addEventListener('click', () => {
+        try {
+          const updatedData = JSON.parse(editor.getValue());
+          document.querySelector('uml-canvas').setCurrentDiagram(updatedData);
+        } catch (err) {
+          alert("Invalid JSON: " + err.message);
+        }
+      });
+
+      const sidebarPopup = document.getElementById('sidebarPopup');
+      document.getElementById('openSidebarBtn').addEventListener('click', () => {
+        sidebarPopup.classList.add('open');
+      });
+      document.getElementById('closeSidebar').addEventListener('click', () => {
+        sidebarPopup.classList.remove('open');
+      });
+    });
+  </script>
+</body>
+
+</html>
