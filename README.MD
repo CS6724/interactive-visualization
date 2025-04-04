@@ -40,7 +40,7 @@ Based on feedback from our in-class demo, we plan to:
 ## 🔗 How to Access
 
 - **GitHub Repo**: [CS6724/interactive-visualization](https://github.com/CS6724/interactive-visualization)  
-- **Demo Video**: [assets/video.mov](Video)  
+- **Demo Video**: [Video](assets/video.mov)  
 - **Live App**: [http://52.87.226.95/](http://52.87.226.95/)
 
 ---
