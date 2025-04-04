@@ -10,7 +10,7 @@
 
 ## 📚 Background
 
-Program comprehension is the process of gaining new or regaining lost knowledge about a computer program. It's a critical yet time-consuming aspect of software development, with developers spending **58%–70%** of their time on it [[Xia et al., 2018]].
+Program comprehension is the process of gaining new or regaining lost knowledge about a computer program. It's a critical yet time-consuming aspect of software development, with developers spending **58%–70%** of their time on it.
 
 Although many tools exist for software documentation and visualization, current solutions often fail to support efficient comprehension. This project aims to address the gap by building an **interactive, multi-level visualization tool** powered by **multi-agent LLMs**.
 
@@ -40,7 +40,7 @@ Based on feedback from our in-class demo, we plan to:
 ## 🔗 How to Access
 
 - **GitHub Repo**: [CS6724/interactive-visualization](https://github.com/CS6724/interactive-visualization)  
-- **Demo Video**: [assets/video.mov](https://github.com/CS6724/interactive-visualization/assets/video.mp4)  
+- **Demo Video**: [assets/video.mov](Video)  
 - **Live App**: [http://52.87.226.95/](http://52.87.226.95/)
 
 ---
