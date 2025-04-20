@@ -2,6 +2,8 @@ import { customElement, eventOptions, state } from 'lit/decorators.js';
 import { LitElement, html, css } from 'lit';
 import { ConfigManager } from '../../services/configuration-manager';
 import Container from 'typedi';
+import { EventsService } from '../../services';
+import { IVLaPEvents } from '../../types';
 
 @customElement('perspective-control')
 export class PerspectiveControl extends LitElement {
@@ -10,6 +12,9 @@ export class PerspectiveControl extends LitElement {
   @state()
   selectedIndex: number;
   protected configManager: ConfigManager;
+  @state()
+  private isEnabled = false;
+  private eventsService:EventsService;
 
   static styles = css`
         :host {
@@ -66,6 +71,14 @@ export class PerspectiveControl extends LitElement {
         this.options = this.configManager.get("perspectiveOptions") || [];
       }
     });
+
+    this.eventsService = Container.get(EventsService);
+          this.eventsService.on(IVLaPEvents.CONTROL_OPTION_CHANGE, (data) => { 
+                if(data.id == "perspectives"){
+                  this.isEnabled = data.value;
+                  this.requestUpdate();
+                }
+              });
   }
   handleToggle(index) {
     this.selectedIndex = index;
@@ -83,7 +96,7 @@ export class PerspectiveControl extends LitElement {
   }
   render() {
     return html`
-            <div class="perspective-container">
+            <div class="perspective-container" style="display: ${this.isEnabled ? 'flex' : 'none'}">
               ${this.options?.map((option, index) => html`
                 <button
                   class="perspective-btn ${index === this.selectedIndex ? 'active' : ''}"

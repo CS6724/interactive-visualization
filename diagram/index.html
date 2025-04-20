@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IVLaP Web Version</title>
+  <title>Duvet Web Version</title>
   <link rel="stylesheet" href="assets/css/web.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.15/lib/codemirror.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.15/theme/material.css">
@@ -91,9 +91,9 @@
 
 <body>
   <div class="container">
-    <!-- <button class="open-sidebar-btn" id="openSidebarBtn">☰ Open Sidebar</button> -->
+    <button class="open-sidebar-btn" id="openSidebarBtn">☰ Open Sidebar</button>
 
-    <!-- <div class="sidebar-popup" id="sidebarPopup">
+    <div class="sidebar-popup" id="sidebarPopup">
       <div class="close-btn" id="closeSidebar">&times;</div>
       <h2>IVLaP Web</h2>
       <form id="diagramControls">
@@ -104,7 +104,7 @@
           <button type="button" id="updateBtn">Update</button>
         </div>
       </form>
-    </div> -->
+    </div>
 
     <div class="content">
       <uml-canvas></uml-canvas>
@@ -157,6 +157,20 @@
       });
     });
   </script>
+    <!-- <script>
+      // Attach an event listener to warn the user before reloading or navigating away
+      window.addEventListener('beforeunload', function (e) {
+        // Custom message is no longer widely supported by browsers. Browsers will instead show a generic confirmation dialog.
+        const confirmationMessage = 'Are you sure you want to leave? All diagram navigation will be lost.';
+  
+        // Legacy method for cross browser support
+        e.returnValue = confirmationMessage;
+        
+        // Return the message for older browsers
+        return confirmationMessage;
+      });
+    </script>
+   -->
 </body>
 
 </html>

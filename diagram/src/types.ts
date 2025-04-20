@@ -3,7 +3,8 @@ export enum IVLaPEvents {
   GRAPH_CHANGE = 'graph-change',
   CONFIG_CHANGE = "config-change",
   CHAT_EVENT = "chat",
-  NAVIGATION_EVENT = "navigation"
+  NAVIGATION_EVENT = "navigation",
+  CONTROL_OPTION_CHANGE = "control-option-change",
 }
 export interface ChatEvent {
   type: 'human' | 'bot'

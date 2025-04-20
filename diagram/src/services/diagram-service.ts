@@ -25,4 +25,8 @@ export class DiagramService {
         this.storageService.setCurrentDiagram(response["data"]);
 
     }
+    public back(){
+        this.storageService.navigateToPervious()
+    }
+    
 }

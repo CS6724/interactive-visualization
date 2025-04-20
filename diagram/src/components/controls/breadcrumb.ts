@@ -1,5 +1,5 @@
 import { LitElement, html, css, TemplateResult } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { Breadcrumb } from './types';
 import { ConfigManager } from '../../services/configuration-manager';
 import Container from 'typedi';
@@ -13,7 +13,9 @@ export class BreadcrumbControl extends LitElement {
 
   @property({ type: Boolean })
   compact: boolean = false;
-  
+  @state()
+  private isEnabled = false;
+
   protected configManager: ConfigManager;
   private storageService: StorageService;
   private eventsService: EventsService;
@@ -85,6 +87,13 @@ export class BreadcrumbControl extends LitElement {
       this.crumbs = this.storageService.getBreadCrumbs();
       this.requestUpdate();
     })
+    this.eventsService.on(IVLaPEvents.CONTROL_OPTION_CHANGE, (data) => { 
+      if(data.id == "breadcrumb") {
+        this.isEnabled = data.value;
+        this.requestUpdate();
+      }
+    });
+    
   }
 
   private handleCrumbClick(crumb: Breadcrumb): void {
@@ -114,7 +123,7 @@ export class BreadcrumbControl extends LitElement {
 
   render(): TemplateResult {
     return html`
-      <div class="breadcrumb-container ${this.compact ? 'compact' : ''}">
+      <div class="breadcrumb-container ${this.compact ? 'compact' : ''}"  style="display: ${this.isEnabled ? 'flex' : 'none'}">
         ${this.crumbs?.map((crumb, index) => html`
           ${index > 0 ? html`<span class="separator">›</span>` : ''}
           <span 

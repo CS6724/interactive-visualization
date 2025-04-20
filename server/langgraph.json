@@ -1,7 +1,8 @@
 {
     "dockerfile_lines": [],
     "graphs": {
-      "main": "./simple.py:graph"
+      "code_information": "./agents/code_information.py:g",
+      "code-duvet": "./agents/graph.py:graph"
     },
     "env": "./.env",
     "python_version": "3.12",

@@ -263,6 +263,19 @@ export class UMLDiagramElement extends LitElement {
     this.configManager = Container.get(ConfigManager);
     this.eventsService = Container.get(EventsService);
 
+    this.eventsService.on(IVLaPEvents.NAVIGATION_EVENT, (data) => {
+      if (data.type == 'zoomIn') {
+        // this.graph!.zoom(1.2);
+        this.graph!.zoomIn();
+      } else if (data.type == 'zoomOut') {
+        // this.graph!.zoom(0.8,true);
+        this.graph!.zoomOut();
+      } else if (data.type == 'reset') {
+        this.graph!.fit();
+        
+      }
+    })
+
   }
 
   // Graph initialization

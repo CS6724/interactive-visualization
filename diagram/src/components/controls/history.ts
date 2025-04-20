@@ -1,8 +1,12 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { EventsService } from '../../services';
+import Container from 'typedi';
+import { IVLaPEvents } from '../../types';
 
 @customElement('history-control')
 export class HistoryControl extends LitElement {
+    private eventsService:EventsService;
     @property({ type: Array }) branches = [
       {
         name: 'main',
@@ -43,6 +47,8 @@ export class HistoryControl extends LitElement {
     ];
     @state() selectedBranchIndex = 0;
     @state() currentIndex = 0;
+
+    @state() isEnabled = true;
 
     static styles = css`
       :host {
@@ -139,6 +145,16 @@ export class HistoryControl extends LitElement {
       }
     `;
 
+    constructor() {
+      super();
+      this.eventsService = Container.get(EventsService);
+      this.eventsService.on(IVLaPEvents.CONTROL_OPTION_CHANGE, (data) => { 
+            if(data.id == "history"){
+              this.isEnabled = data.value;
+              this.requestUpdate();
+            }
+          });
+    }
     get currentBranch() {
       return this.branches[this.selectedBranchIndex]?.commits || [];
     }
@@ -171,7 +187,7 @@ export class HistoryControl extends LitElement {
       const end = Math.min(commits.length, this.currentIndex + sideCount + 1);
 
       return html`
-        <div class="control-container">
+        <div class="control-container" style="display: ${this.isEnabled ? 'flex' : 'none'}">
           <select class="branch-selector" @change=${this.handleBranchChange}>
             ${this.branches.map(
               (branch) => html`<option>${branch.name} - ${branch.commits.length}</option>`

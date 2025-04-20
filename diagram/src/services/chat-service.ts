@@ -24,7 +24,6 @@ export class ChatService {
       "user_query": user_input,
       "diagram_data": this.storageService.getCurrentDiagram()
     }
-    console.log(JSON.stringify(payload))
     fetch(this.base_url, {
       method: "POST",
       headers: {

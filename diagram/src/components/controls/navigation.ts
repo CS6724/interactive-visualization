@@ -3,13 +3,17 @@ import { LitElement, html, css } from 'lit';
 import { EventsService } from '../../services';
 import Container from 'typedi';
 import { IVLaPEvents } from '../../types';
+import { DiagramService } from '../../services/diagram-service';
 
 @customElement('navigation-control')
 export class NavigationControl extends LitElement {
     @state()
     private activeButton = null;
-
+    @state()
+    private isEnabled = true;
+    
     private eventsService:EventsService;
+    private diagramService:DiagramService;
     static styles = css`
       :host {
         display: block;
@@ -65,30 +69,38 @@ export class NavigationControl extends LitElement {
     constructor() {
       super();
       this.eventsService = Container.get(EventsService);
+      this.diagramService = Container.get(DiagramService);
+      this.eventsService.on(IVLaPEvents.CONTROL_OPTION_CHANGE, (data) => { 
+        if(data.id == "navigation") {
+          this.isEnabled = data.value;
+          this.requestUpdate();
+        }
+      });
     }
 
     handleAction(action) {
       if (action === 'drag') {
         this.activeButton = this.activeButton === 'drag' ? null : 'drag';
+      } else if(action==="back") {
+        this.diagramService.back();
+      } else if(action==="forward") {
+        console.log("forward")
       } else {
         this.activeButton = null;
+        this.eventsService.emit(IVLaPEvents.NAVIGATION_EVENT, {
+          type: action
+        });
       }
-
-      this.eventsService.emit(IVLaPEvents.NAVIGATION_EVENT, {
-        type: action
-      })
-      this.dispatchEvent(new CustomEvent('nav-action', {
-        detail: { action },
-        bubbles: true,
-        composed: true
-      }));
+    
+      
+      
       
       console.log(`Action triggered: ${action}`);
     }
 
     render() {
       return html`
-        <div class="controls-container">
+        <div class="controls-container" style="display: ${this.isEnabled ? 'flex' : 'none'}">
           <!-- Back button -->
           <button class="nav-btn" @click=${() => this.handleAction('back')} title="Back">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

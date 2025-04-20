@@ -42,4 +42,30 @@ export class DataService {
     }
 
 
+    public async fetchFAQs(): Promise<any> {
+        
+        let url = `${this.base_url}/data/faq`;
+        try {
+            // Fetch data from the endpoint
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            // Check if the response is successful
+            if (!response.ok) {
+                console.log("error")
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            // Parse the JSON response
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            return null;
+        }
+    }
 }

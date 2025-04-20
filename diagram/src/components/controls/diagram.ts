@@ -2,13 +2,15 @@ import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { ConfigManager } from '../../services/configuration-manager';
 import Container from 'typedi';
+import { EventsService } from '../../services';
+import { IVLaPEvents } from '../../types';
 
 @customElement('diagram-control')
 export class DiagramControl extends LitElement {
   @state() 
   public options: { id: string; label: string; info: string, selected:boolean, editable:boolean }[];
   protected configManager: ConfigManager;
-
+  private eventsService: EventsService;
   static styles = css`
     .float-container {
       position: fixed;
@@ -153,25 +155,25 @@ export class DiagramControl extends LitElement {
   public constructor() {
     super();
     this.configManager = Container.get(ConfigManager);
-    this.configManager.on("config-change", (key)=>{
-      if(key=="diagramOptions"){
-        this.options = this.configManager.get("diagramOptions") || [];
-      }
-    });
+    this.eventsService = Container.get(EventsService);
   }
   async firstUpdated() {
-    this.options = this.configManager.get("diagramOptions") || [];
+    ///TODO: read from local storage, if the options exist
+    this.options = [
+      { id: 'history', label: 'History', info: 'Show version history controls', selected: true, editable: true },
+      { id: 'navigation', label: 'Navigation', info: 'Show navigation controls', selected: true, editable: true },
+      { id: 'chat', label: 'Chat', info: 'Enable chat', selected: true, editable: true },
+      { id: 'breadcrumb', label: 'Breadcrumb', info: 'Show breadcrumb controls', selected: false, editable: true },
+      { id: 'perspectives', label: 'Perspectives', info: 'Show perspectives controls', selected: false, editable: true },
+    ];
   }
 
   private handleCheckboxChange(event: Event, id: string) {
     const target = event.target as HTMLInputElement;
-    this.dispatchEvent(new CustomEvent('option-change', {
-        detail: {
-          value: id
-        },
-        bubbles: true,
-        composed: true
-      }));  
+    this.eventsService.emit(IVLaPEvents.CONTROL_OPTION_CHANGE, {
+      id: id,
+      value: target.checked
+    })
   }
   render() {
     return html`

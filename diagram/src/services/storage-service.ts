@@ -214,6 +214,7 @@ export class StorageService {
     }
   }
 
+  
   /**
    * Retrieves the type of the current diagram, as indicated by its `DiagramType` property.
    *

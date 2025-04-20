@@ -1,0 +1,32 @@
+llms:
+  information_supervisor:
+    provider: anthropic
+    model: claude-3-7-sonnet-20250219
+  source_code:
+    provider: anthropic
+    model: claude-3-7-sonnet-20250219
+  information_git:
+    provider: anthropic
+    model: claude-3-7-sonnet-20250219
+  information_github:
+    provider: anthropic
+    model: claude-3-7-sonnet-20250219 
+  information_docs:
+    provider: anthropic
+    model: claude-3-7-sonnet-20250219
+  response_supervisor:
+    provider: anthropic
+    model: claude-3-7-sonnet-20250219
+    # provider: groq
+    # model: deepseek-r1-distill-llama-70b  # Options: ["mixtral-8x7b-32768", "llama3-8b-8192", "llama3-70b-8192", "deepseek-coder", "deepseek-coder-33b", "gemma-7b-it"]
+    # temperature: 0.3
+  response_chat:
+    provider: anthropic
+    model: claude-3-7-sonnet-20250219
+    # provider: groq
+    # model: deepseek-r1-distill-llama-70b  # Options: ["mixtral-8x7b-32768", "llama3-8b-8192", "llama3-70b-8192", "deepseek-coder", "deepseek-coder-33b", "gemma-7b-it"]
+    # temperature: 0.3
+
+datasource:
+  database:
+    

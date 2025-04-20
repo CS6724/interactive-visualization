@@ -1,0 +1,10 @@
+requests
+pygithub
+langgraph
+langchain-core
+langchain-community
+langchain-openai
+langchain-groq
+langchain-ollama
+langchain-anthropic
+GitPython
