@@ -84,7 +84,6 @@ class GitHubAgent:
         sg.add_edge("final", END)
         return sg.compile()
 
-
 def information_github_node(state: State) -> State:
     query = state["github_query"][-1] if isinstance(state["github_query"], list) else state["github_query"]
     if query == "PASS":
@@ -98,6 +97,5 @@ def information_github_node(state: State) -> State:
         "github_url": [state["github_url"]],
         "context": []
     })
-    print(result)
     state["github_response"] = AIMessage(content=result["final_result"])
     return state

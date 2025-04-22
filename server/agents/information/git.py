@@ -118,10 +118,18 @@ class GitAgent:
         sg.add_edge("final", END)
 
         return sg.compile()
+
 def information_git_node(state: State) -> State:
-    query = state["git_query"][-1] if isinstance(state["git_query"], list) else state["git_query"]
-    if query == "PASS":
-        state["git_response"] = ""
+    query = state.get("git_query", [])
+    
+    if isinstance(query, list):
+        if not query:  # If it's an empty list
+            print("Git query skipped: empty list.")
+            state["git_response"] = [AIMessage(content="PASS")]
+            return state
+        query = query[-1]  # Otherwise, use the last HumanMessage
+    elif query == "PASS":
+        state["git_response"] = [AIMessage(content="PASS")]
         return state
     agent = GitAgent()
     result = agent.graph.invoke({
@@ -132,5 +140,6 @@ def information_git_node(state: State) -> State:
         ),
         "context": []
     })
-    state["git_response"] = AIMessage(result["final_result"])
+    state["git_response"] = [AIMessage(content=result["result"])]
+    # state["git_response"] = [AIMessage(content=result)]
     return state

@@ -210,7 +210,7 @@ def information_source_code_node(state: State) -> State:
     Returns:
         State: The updated state with the SQL query result stored in 'source_response'.
     """
-    query = state["source_query"][-1] if isinstance(state["source_query"], list) else state["source_query"]
+    query = state["source_query"][-1] if isinstance(state["source_query"], list) and state["source_query"] else state["source_query"]
     if query == "PASS":
         state["source_response"] = ""
         return state

@@ -22,10 +22,10 @@ def response_chat_node(state: State) -> State:
     # Create the input for the prompt
     chain_input = {
         "user_query": state["user_query"],
-        "source_response": state["source_response"],
-        "git_response": state["git_response"],
-        "github_response": state["github_response"],
-        "docs_response": state["docs_response"],
+        "source_response": state.get("source_response",[]),
+        "git_response": state.get("git_response",[]),
+        "github_response": state.get("github_response",[]),
+        "docs_response": state.get("docs_response",[]),
         "context": [],
     }
     # Run the prompt → LLM → output chain

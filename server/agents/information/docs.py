@@ -78,16 +78,21 @@ class DocsAgent:
 
 
 def information_docs_node(state: State) -> State:
-    query = state["docs_query"][-1] if isinstance(state["docs_query"], list) else state["docs_query"]
-    if query == "PASS":
-        state["docs_response"] = ""
+    query = state.get("docs_query", [])
+    
+    if isinstance(query, list):
+        if not query:  # If it's an empty list
+            state["docs_response"] = [AIMessage(content="PASS")]
+            return state
+        query = query[-1]  # Otherwise, use the last HumanMessage
+    elif query == "PASS":
+        state["docs_response"] = [AIMessage(content="PASS")]
         return state
-
     agent = DocsAgent()
     result = agent.graph.invoke({
         "docs_query": state["docs_query"],
-        "docs_source": state["docs_source"],
-        "docs_source_type": state["docs_source_type"],
+        "docs_source": state.get("docs_source", ""),
+        "docs_source_type": state.get("docs_source_type", "none"),
         "context": []
     })
 

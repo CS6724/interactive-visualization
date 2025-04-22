@@ -10,36 +10,44 @@ prompt = get_prompts(AGENT_KEY)
 
 def safe_parse_json(text: str):
     try:
+        if not text or "{" not in text:
+            raise ValueError("No JSON object found.")
         json_str = text[text.index("{"):]
         return json.loads(json_str)
     except Exception as e:
-        print("LLM response could not be parsed:", e)
         return {
-            "chat_response": False,
+            "chat_response": True,
             "diagram_response": False,
             "navigation_response": False
         }
+def ensure_list(value):
+    # Ensure all values are lists of BaseMessages
+    if isinstance(value, list):
+        return value
+    elif isinstance(value, str):
+        return [HumanMessage(content=value)]
+    elif isinstance(value, BaseMessage):
+        return [value]
+    else:
+        return []
 
 def response_supervisor_node(state: State) -> State:
-    chain = prompt | llm | RunnableLambda(lambda msg: msg.content if isinstance(msg, BaseMessage) else msg)
-    result = chain.invoke({
-        "user_query": state["user_query"],
-        "source_response": [state["source_response"]],
-        "git_response": [state["git_response"]],
-        "github_response": [state["github_response"]],
-        "docs_response": [state["docs_response"]],
-        "context": [],
-    })
+    input_data = {
+        "user_query": ensure_list(state.get("user_query", [])),
+        "source_response": ensure_list(state.get("source_response", [])),
+        "git_response": ensure_list(state.get("git_response", [])),
+        "github_response": ensure_list(state.get("github_response", [])),
+        "docs_response": ensure_list(state.get("docs_response", [])),
+        "context": ensure_list(state.get("context", [])),
+    }
 
+    # This chain already includes prompt -> LLM -> extract .content
+    chain = prompt | llm | RunnableLambda(lambda msg: msg.content if isinstance(msg, BaseMessage) else msg)
+    result = chain.invoke(input_data)
     parsed = safe_parse_json(result)
 
     state["should_run_chat"] = parsed.get("chat_response", False)
     state["should_run_diagram"] = parsed.get("diagram_response", False)
     state["should_run_navigation"] = parsed.get("navigation_response", False)
-
-    # if not (state["should_run_chat"] or state["should_run_diagram"] or state["should_run_navigation"]):
-    #     state["chat_reply"] = HumanMessage(
-    #         content=f"I'm sorry, I can't answer the following question based on the tools and information available:\n\n❓ {state['user_query'][-1].content}"
-    #     )
 
     return state
