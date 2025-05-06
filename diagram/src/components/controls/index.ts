@@ -7,3 +7,4 @@ export * from "./subdiagram";
 export * from "./types";
 export * from "./navigation";
 export * from "./history";
+export * from "./help";

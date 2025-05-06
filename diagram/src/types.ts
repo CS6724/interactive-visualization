@@ -5,6 +5,7 @@ export enum IVLaPEvents {
   CHAT_EVENT = "chat",
   NAVIGATION_EVENT = "navigation",
   CONTROL_OPTION_CHANGE = "control-option-change",
+  HELP_EVENT = "help_event"
 }
 export interface ChatEvent {
   type: 'human' | 'bot'

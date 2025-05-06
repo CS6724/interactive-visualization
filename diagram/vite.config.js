@@ -12,5 +12,8 @@ export default defineConfig({
     open: true, // Auto open browser
     port: 3000
   },
+  optimizeDeps: {
+    include: ['driver.js', 'driver.js/dist/driver.css'],
+  },
   // assetsInclude: ['**/*.css'],
 });

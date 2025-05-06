@@ -11,12 +11,14 @@ class State(TypedDict):
     user_query: Annotated[list[HumanMessage], add_messages]
 
     # Project config
+    project_name: Annotated[Optional[HumanMessage], identity]
     source_db: Annotated[Optional[HumanMessage], identity]
     repository_path: Annotated[Optional[HumanMessage], identity]
     github_url: Annotated[Optional[HumanMessage], identity]
     docs_source: Annotated[Optional[HumanMessage], identity]
-    docs_source_type: Annotated[Optional[HumanMessage], identity]
     original_diagram: Annotated[Optional[UMLClassDiagram], identity]
+    context: Annotated[Optional[list[HumanMessage]], add_messages]
+    history:  Annotated[Optional[HumanMessage], add_messages]
 
     # Agent input queries
     source_query: Annotated[list[HumanMessage], add_messages]

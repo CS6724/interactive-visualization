@@ -3,7 +3,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { ChatService, DataService, EventsService, StorageService } from '../../services';
 import Container from 'typedi';
 import { IVLaPEvents } from '../../types';
-
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 ///TODO: Split into service and component
 ///TODO: Fetch the FAQ on load
 @customElement('chat-control')
@@ -15,7 +15,7 @@ export class ChatControl extends LitElement {
 
   @state()
   private messages = [];
-
+  
   @state()
   private isEnabled = true;
   
@@ -32,7 +32,7 @@ export class ChatControl extends LitElement {
   private expandedCategories = new Set();
 
   @state() 
-  private sidebarWidth = 320;
+  private sidebarWidth = 420;
 
   @state()
   private inputValue = '';
@@ -161,7 +161,8 @@ export class ChatControl extends LitElement {
       visibility: hidden;
     }
     .chat-bubble {
-      max-width: 70%;
+      max-width: 90%;
+      min-width: 50%;
       padding: 10px;
       margin: 5px;
       border-radius: 15px;
@@ -402,7 +403,7 @@ export class ChatControl extends LitElement {
       top: 4em;
       right: 1em;
       height: 90vh;
-      max-width: 320px;
+      max-width: 50vw;
       background-color: white;
       box-shadow: -2px 0 10px rgba(0,0,0,0.1);
       transform: translateX(100%);
@@ -532,7 +533,16 @@ export class ChatControl extends LitElement {
     this.chatService = Container.get(ChatService);
     this.dataService = Container.get(DataService);
 
-    this.eventsService.on(IVLaPEvents.CHAT_EVENT, (data) => { this.handleResponse(data) });
+    this.eventsService.on(IVLaPEvents.CHAT_EVENT, (data) => { 
+        this.handleResponse(data);
+        if(data.updated_diagram){
+          if(data.updated_diagram?.classes){
+            console.log(data.updated_diagram.classes);
+            this.storageService.setCurrentDiagram(data.updated_diagram);
+          }
+        }
+      });
+      
     this.eventsService.on(IVLaPEvents.CONTROL_OPTION_CHANGE, (data) => { 
       if(data.id == "chat"){
         this.isEnabled = data.value;
@@ -540,7 +550,6 @@ export class ChatControl extends LitElement {
     });
 
     this.dataService.fetchFAQs().then((data) => {
-      console.log("FAQ data fetched:", data);
       if (data) {
         this.faqData = data;
         this.requestUpdate();
@@ -628,7 +637,10 @@ export class ChatControl extends LitElement {
     this.messages = [...this.messages, { type: 'bot', content: message }];
     this.scrollToBottom();
   }
-
+  getLastUserMessage(): string | null {
+    const userMessages = this.messages.filter(msg => msg.type === 'user');
+    return userMessages.length > 0 ? userMessages[userMessages.length - 1].content : null;
+  }
   showError(message) {
     const errorMsg = { type: 'error', content: message };
     this.messages = [...this.messages, errorMsg];
@@ -653,17 +665,30 @@ export class ChatControl extends LitElement {
     this.isThinking = true;
     const message = this.inputValue.trim();
     if (!message) return;
-    this.chatService.sendMessage(message);
+    this.chatService.sendMessage(message, 0, this.messages);
     this.addUserMessage(message);
     this.inputValue = '';
   }
-  handleResponse(data) {
-    this.isThinking = false;
-    if (data.message) {
-      this.addBotMessage(data.message)
+  handleResponse(response) {
+    if(response.actions.includes("fail")){
+      this.isThinking = false;
+      this.addBotMessage(response.message)
+      return
     }
-    if (data.diagram_data) {
-      this.storageService.setCurrentDiagram(data.diagram_data)
+    if(response.actions.includes("retry")){
+      this.addBotMessage(response.message)
+      this.chatService.sendMessage(this.getLastUserMessage(), response.attempt+1, this.messages);
+      return
+    }
+    if (response.message) {
+      console.log("Response: " + response.message);
+      this.addBotMessage(this.formatResponseTextToHTML(response.message))
+    }
+    if (response.actions.includes("update") && response.updated_diagram) {
+      this.storageService.setCurrentDiagram(response.diagram_data)
+    }
+    if (response.actions.includes("navigate") && response.navigateTo) {
+      console.log("Navigate To: " + response.navigateTo)
     }
   }
   handleKeyPress(e) {
@@ -737,16 +762,30 @@ export class ChatControl extends LitElement {
     }, 100);
   }
 
+  // renderChatMessages() {
+  //   return this.messages.map((message, index) => {
+  //     if (message.type === 'error') {
+  //       return html`<div class="error-message">${message.content}</div>`;
+  //     }
+
+  //     return html`
+  //       <div class="chat-bubble ${message.type}">
+  //         <div class="avatar"></div>
+  //         <div class="content">${message.content}</div>
+  //       </div>
+  //     `;
+  //   });
+  // }
   renderChatMessages() {
     return this.messages.map((message, index) => {
       if (message.type === 'error') {
-        return html`<div class="error-message">${message.content}</div>`;
+        return html`<div class="error-message">${unsafeHTML(message.content)}</div>`;
       }
-
+  
       return html`
         <div class="chat-bubble ${message.type}">
           <div class="avatar"></div>
-          <div class="content">${message.content}</div>
+          <div class="content">${unsafeHTML(message.content)}</div>
         </div>
       `;
     });
@@ -807,7 +846,6 @@ export class ChatControl extends LitElement {
       bubbles: true,
       composed: true
     }));
-    this.clearContext();
     this.toggeChat();
   }
 
@@ -816,12 +854,54 @@ export class ChatControl extends LitElement {
     this.requestUpdate();
   }
 
+  private formatResponseTextToHTML(text) {
+    const lines = text.trim().replace(/\r/g, '').split('\n');
+    let html = '';
+    let listType = null;
+  
+    lines.forEach((line, idx) => {
+      const trimmed = line.trim();
+  
+      if (/^\d+\./.test(trimmed)) {
+        if (listType !== 'ol') {
+          if (listType) html += `</${listType}>`;
+          html += '<ol>';
+          listType = 'ol';
+        }
+        html += `<li>${trimmed.replace(/^\d+\.\s*/, '')}</li>`;
+      } else if (/^[-*]/.test(trimmed)) {
+        if (listType !== 'ul') {
+          if (listType) html += `</${listType}>`;
+          html += '<ul>';
+          listType = 'ul';
+        }
+        html += `<li>${trimmed.replace(/^[-*]\s*/, '')}</li>`;
+      } else if (trimmed === '') {
+        if (listType) {
+          html += `</${listType}>`;
+          listType = null;
+        }
+        html += '<br>';
+      } else {
+        if (listType) {
+          html += `</${listType}>`;
+          listType = null;
+        }
+        html += `<p>${trimmed}</p>`;
+      }
+    });
+  
+    if (listType) html += `</${listType}>`;
+  
+    return html;
+  }
+
   render() {
     return html`
       <div class="chat-sidebar ${!this.isMinimized && this.isEnabled? 'open' : ''}" style="width: ${this.sidebarWidth}px;">
         <div class="sidebar-resizer" @mousedown=${this.initSidebarResize}></div>
           <div class="chat-header">
-            <span>Ask IVLaP</span>
+            <span>Ask DUVET</span>
             <button class="chat-minimize-btn" @click="${() => this.toggleChat()}">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>

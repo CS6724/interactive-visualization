@@ -3,7 +3,8 @@ import uvicorn
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from routers import data, chat
-
+from dotenv import load_dotenv
+load_dotenv()
 app = FastAPI()
 
 app.add_middleware(

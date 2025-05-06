@@ -95,7 +95,7 @@ def information_github_node(state: State) -> State:
     result = agent.graph.invoke({
         "github_query": state["github_query"],
         "github_url": [state["github_url"]],
-        "context": []
+        "context": state.get("context", [])
     })
     state["github_response"] = AIMessage(content=result["final_result"])
     return state

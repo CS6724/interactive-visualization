@@ -10,20 +10,19 @@ import './components/controls/chat';
 import './components/controls/subdiagram';
 import './components/controls/navigation';
 import './components/controls/history';
-
+import './components/controls/help';
 import 'reflect-metadata';
 import Container from 'typedi';
 
 import { StorageService, ConfigManager, EventsService } from './services/';
-import { DiagramControl, PerspectiveControl, BreadcrumbControl, SummaryTooltip, ChatControl, SubdiagramControl, NavigationControl, HistoryControl } from './components/controls';
+import { DiagramControl, PerspectiveControl, BreadcrumbControl, SummaryTooltip, ChatControl, HelpControl, NavigationControl, HistoryControl } from './components/controls';
 import { getPainter, UMLDiagramPainter } from './diagram-painters';
 import { IVLaPEvents } from './types';
-
+import { TourService } from './services/tour-service';
 @customElement('uml-canvas')
 export class UMLDiagramElement extends LitElement {
   private graph: Graph | null = null;
   private painter: UMLDiagramPainter;
-  private selections = [];
   private storageService: StorageService;
   private eventsService: EventsService;
   private configManager: ConfigManager;
@@ -38,11 +37,11 @@ export class UMLDiagramElement extends LitElement {
   @query('perspective-control') perspectiveControl!: PerspectiveControl;
   @query('breadcrumb-control') breadcrumbControl!: BreadcrumbControl;
   @query('diagram-control') diagramControl!: DiagramControl;
-  // @query('subdiagram-control') subdiagramControl!: SubdiagramControl;
+  @query('help-control') helpControl!: HelpControl;
   @query('navigation-control') navigationControl!: NavigationControl;
   @query('history-control') historyControl!:HistoryControl;
   @query('summaryTooltip') summaryTooltip!: SummaryTooltip;
-
+  
 
   static styles = css`
     :host {
@@ -54,22 +53,22 @@ export class UMLDiagramElement extends LitElement {
         margin: 0em !;
       }
 
-      #entitySelect {
-        width: 100%;
-        padding: 8px 12px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        background-color: white;
-        font-size: 14px;
-        margin-bottom: 10px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        appearance: none;
-        /* Removes default browser styling */
-        background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 10px center;
-        background-size: 16px;
-      }
+    #entitySelect {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: white;
+      font-size: 14px;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      appearance: none;
+      /* Removes default browser styling */
+      background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 16px;
+    }
 
       #entitySelect:focus {
         outline: none;
@@ -239,6 +238,7 @@ export class UMLDiagramElement extends LitElement {
       }
 
       .uml-package-header {
+        font-family: 'Roboto', sans-serif;
         background: linear-gradient(to bottom, #3498db, #2980b9);
         color: white;
         font-weight: bold;
@@ -256,6 +256,8 @@ export class UMLDiagramElement extends LitElement {
         padding-top: 15px;
         border-top: 2px solid #777;
       }
+      
+
   `;
   constructor() {
     super()
@@ -274,6 +276,13 @@ export class UMLDiagramElement extends LitElement {
         this.graph!.fit();
         
       }
+    })
+    this.eventsService.on(IVLaPEvents.HELP_EVENT, (data)=>{
+      if (data.type == 'start') {
+        this._startTour();
+      } else if (data.type == 'dismiss') {
+        this._dismissTour(data.value)
+      } 
     })
 
   }
@@ -380,20 +389,13 @@ export class UMLDiagramElement extends LitElement {
 
 
   // Start: Selection management
-  public toggleSelection(id: string) {
-    const selectedElement = this.graph.container.querySelector(id);
-    if (selectedElement) {
-      this.selections.push(id);
-      selectedElement.classList.toggle('selected');
-    }
-  }
+  // public toggleSelection(id: string) {
+  //   const selectedElement = this.graph.container.querySelector(id);
+  //   if (selectedElement) {
+  //     selectedElement.classList.toggle('selected');
+  //   }
+  // }
 
-  public clearSelections() {
-    this.graph.container.querySelectorAll(`.selected`).forEach(selectedElement => {
-      selectedElement.classList.remove('selected');
-    });
-
-  }
   // End: Selection management
 
   // Start Chat control
@@ -443,7 +445,7 @@ export class UMLDiagramElement extends LitElement {
 
 
     // Update diagram on data change
-    this.storageService.on(IVLaPEvents.DIAGRAM_CHANGE, () => { 
+    this.eventsService.on(IVLaPEvents.DIAGRAM_CHANGE, () => { 
       if (!this.painter || this.painter.getType() != this.storageService.getCurrentDiagramType()) {
         this.drawDiagram();
       }else {
@@ -478,15 +480,14 @@ export class UMLDiagramElement extends LitElement {
 
     // START: Chat Control
     this.chatControl.addEventListener("close-chat", function (e: CustomEvent) {
-      canvas.clearSelections();
     });
 
     this.chatControl.addEventListener("clear-selection", function (e: CustomEvent) {
-      canvas.clearSelections();
-
+      this.storageService.clearSelections();
+      e.preventDefault()
     });
     this.chatControl.addEventListener("toggle-selection", function (e: CustomEvent) {
-      canvas.toggleSelection(e.detail.id)
+      this.storageService.toggleSelection(e.detail.id)
     });
     // END: Chat Control
 
@@ -517,19 +518,49 @@ export class UMLDiagramElement extends LitElement {
 
   // Render the diagram
   render() {
-    return html`<div id="diagram">
-      <breadcrumb-control></breadcrumb-control>
-      <perspective-control></perspective-control>
-      <div id="graph-container" class="${this.isChatOpen ? 'chat-open' : ''}"></div>
-      <diagram-control></diagram-control>
-      <summary-tooltip></summary-tooltip>
-      <!--subdiagram-control></subdiagram-control-->
-      <chat-control></chat-control>
-      <navigation-control></navigation-control>
-      <history-control></history-control>
-    </div>`;
+    return html`
+      <div id="diagram">
+        
+        <breadcrumb-control></breadcrumb-control>
+        <perspective-control></perspective-control>
+        <div id="graph-container" class="${this.isChatOpen ? 'chat-open' : ''}"></div>
+        <diagram-control></diagram-control>
+        <summary-tooltip></summary-tooltip>
+        <chat-control></chat-control>
+        <navigation-control></navigation-control>
+        <help-control></help-control>
+        <history-control></history-control>
+      </div>`;
   }
 
+  private _startTour() {
+    // import('./services/tour-service').then(({ TourService }) => {
+      const elements = {
+        graphContainer: this.shadowRoot?.querySelector('#diagram') as HTMLElement,
+        historyControl: this.shadowRoot?.querySelector('history-control') as HTMLElement,
+        navigationControl: this.shadowRoot?.querySelector('navigation-control') as HTMLElement,
+        chatControl: (this.shadowRoot?.querySelector('chat-control')?.shadowRoot?.querySelector('.chat-toggle-btn')) as HTMLElement,
+        diagramControl: (this.shadowRoot?.querySelector('diagram-control')?.shadowRoot?.querySelector('.controls-icon')) as HTMLElement,
+        perspectiveControl: (this.shadowRoot?.querySelector('perspective-control')?.shadowRoot?.querySelector('.perspective-container')) as HTMLElement,
+        breadcrumbControl: (this.shadowRoot?.querySelector('breadcrumb-control')?.shadowRoot?.querySelector('.breadcrumb-container')) as HTMLElement,
+        helpControl: (this.shadowRoot?.querySelector('help-control')?.shadowRoot?.querySelector('.help-btn')) as HTMLElement
+      };
+      if (Object.values(elements).every(el => el)) {
+        TourService.startTour(elements);
+      }
+    // });
+  }
+  
+  private _dismissTour(show_again) {
+    
+    sessionStorage.setItem('umlTourPromptDismissed', 'true');
+    
+    if (!show_again) {
+      localStorage.setItem('umlTourDone', 'true');
+    }
+    this.requestUpdate(); // re-render to hide prompt
+  }
+  
   public getCurrentDiagram(){
     return this.storageService.getCurrentDiagram();
   }

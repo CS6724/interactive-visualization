@@ -34,12 +34,12 @@ def load_llm(agent_config):
     else:
         raise ValueError(f"Unsupported LLM provider: {provider}")
 
-CONFIG_FILE = "config.anthropic.yaml"
+# CONFIG_FILE = "config.anthropic.yaml"
 # CONFIG_FILE = "config.groq.yaml"
 
 # Load the YAML config file that defines LLM configurations for multiple agents
-config_path = os.path.join(os.path.dirname(__file__), "..",CONFIG_FILE)
-
+config_path = os.path.join(os.path.dirname(__file__), "..",os.getenv("CONFIG_FILE"))
+print(os.getenv("CONFIG_FILE"))
 with open(os.path.abspath(config_path), "r") as f:
     config = yaml.safe_load(f)
 

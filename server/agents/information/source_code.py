@@ -217,7 +217,7 @@ def information_source_code_node(state: State) -> State:
     agent = SourceAgent(db_uri=f"sqlite:///{state['source_db']}.db")
     result = agent.graph.invoke({
             "source_query": state["source_query"],
-            "context": []
+            "context": state.get("context", [])
         })
     state["source_response"] = AIMessage(result["final_result"])
     return state

@@ -138,7 +138,7 @@ def information_git_node(state: State) -> State:
             state["repository_path"] if isinstance(state["repository_path"], list)
             else [state["repository_path"]]
         ),
-        "context": []
+        "context": state.get("context", [])
     })
     state["git_response"] = [AIMessage(content=result["result"])]
     # state["git_response"] = [AIMessage(content=result)]

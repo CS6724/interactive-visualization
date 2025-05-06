@@ -11,6 +11,8 @@ export class NavigationControl extends LitElement {
     private activeButton = null;
     @state()
     private isEnabled = true;
+    @state() 
+    private onTour = false;
     
     private eventsService:EventsService;
     private diagramService:DiagramService;
@@ -19,7 +21,7 @@ export class NavigationControl extends LitElement {
         display: block;
         position: absolute;
         top: 20px;
-        right: 20px;
+        right: 60px;
         z-index: 1000;
       }
 
@@ -76,6 +78,15 @@ export class NavigationControl extends LitElement {
           this.requestUpdate();
         }
       });
+      this.eventsService.on(IVLaPEvents.HELP_EVENT, (data) => {
+        if (data.type == "start") {
+          this.onTour = true;
+        }
+        if (data.type == "end") {
+          this.onTour = false;
+        }
+        this.requestUpdate();
+      });
     }
 
     handleAction(action) {
@@ -100,7 +111,7 @@ export class NavigationControl extends LitElement {
 
     render() {
       return html`
-        <div class="controls-container" style="display: ${this.isEnabled ? 'flex' : 'none'}">
+        <div class="controls-container" style="display: ${this.isEnabled  || this.onTour? 'flex' : 'none'}">
           <!-- Back button -->
           <button class="nav-btn" @click=${() => this.handleAction('back')} title="Back">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

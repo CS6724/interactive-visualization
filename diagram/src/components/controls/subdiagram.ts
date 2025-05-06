@@ -2,17 +2,23 @@ import { customElement, eventOptions, state } from 'lit/decorators.js';
 import { LitElement, html, css } from 'lit';
 import { ConfigManager } from '../../services/configuration-manager';
 import Container from 'typedi';
+import { EventsService } from '../../services';
+import { IVLaPEvents } from '../../types';
 
 @customElement('subdiagram-control')
 export class SubdiagramControl extends LitElement {
-    @state()
-    public options: any[] = [];
-    @state()
-    selectedIndex: number;
-    
-    protected configManager: ConfigManager;
-    
-      static styles = css`
+  @state()
+  public options: any[] = [];
+  @state()
+  selectedIndex: number;
+  @state()
+  private isEnabled = false;
+  @state()
+  private onTour = false;
+  protected configManager: ConfigManager;
+  private eventsService: EventsService
+
+  static styles = css`
         :host {
           display: block;
           width: 100%;
@@ -56,32 +62,42 @@ export class SubdiagramControl extends LitElement {
         }
     
       `;
-      constructor() {
-        super();
-        this.selectedIndex = 0;
-        this.configManager = Container.get(ConfigManager);
-        this.configManager.on("config-change", (key)=>{
-          if(key=="subdiagramOptions"){
-            this.options = this.configManager.get("subdiagramOptions") || [];
-          }
-        });
-      }
-      handleToggle(index) {
-        this.selectedIndex = index;
-        this.dispatchEvent(new CustomEvent('subdiagram-selected', {
-          detail: {
-            index: this.selectedIndex,
-            value: this.options[this.selectedIndex].id
-          },
-          bubbles: true,
-          composed: true
-        }));
-      }
-      async firstUpdated() {
+  constructor() {
+    super();
+    this.selectedIndex = 0;
+    this.configManager = Container.get(ConfigManager);
+    this.eventsService = Container.get(EventsService);
+    this.configManager.on("config-change", (key) => {
+      if (key == "subdiagramOptions") {
         this.options = this.configManager.get("subdiagramOptions") || [];
       }
-      render() {
-        return html`
+    });
+    this.eventsService.on(IVLaPEvents.HELP_EVENT, (data) => {
+      if (data.type == "start") {
+        this.onTour = true;
+      }
+      if (data.type == "end") {
+        this.onTour = false;
+      }
+      this.requestUpdate();
+    });
+  }
+  handleToggle(index) {
+    this.selectedIndex = index;
+    this.dispatchEvent(new CustomEvent('subdiagram-selected', {
+      detail: {
+        index: this.selectedIndex,
+        value: this.options[this.selectedIndex].id
+      },
+      bubbles: true,
+      composed: true
+    }));
+  }
+  async firstUpdated() {
+    this.options = this.configManager.get("subdiagramOptions") || [];
+  }
+  render() {
+    return html`
             <div class="subdiagram-container">
               ${this.options?.map((option, index) => html`
                 <button
@@ -93,5 +109,5 @@ export class SubdiagramControl extends LitElement {
               `)}
             </div>
         `;
-      }
-    }
+  }
+}

@@ -6,51 +6,52 @@ import { IVLaPEvents } from '../../types';
 
 @customElement('history-control')
 export class HistoryControl extends LitElement {
-    private eventsService:EventsService;
-    @property({ type: Array }) branches = [
-      {
-        name: 'main',
-        commits: [
-          '0-86b11d1',
-          '2-6e291c3',
-          '4-a36bbe6',
-          '6-6850e62',
-          '9-kadsfcs',
-          '1-9d9c9x1',
-          '2-98xcank',
-          '4-dx9dfnd',
-        ],
-      },
-      {
-        name: 'develop',
-        commits: [
-          '1-d5e2f1a',
-          '3-a7c8bb3',
-          '5-7782cfe',
-          '7-ff9d234',
-        ],
-      },
-      {
-        name: 'release',
-        commits: [
-          'r1-a1b2c3d',
-          'r2-d4e5f6g',
-          'r3-h7i8j9k',
-          'r4-asdasfa',
-          'r5-l0m1n2o',
-          'r6-0238cdj',
-          'r7-jkasdda',
-          'r8-akl2433',
-          'r9-as092ds',
-        ],
-      },
-    ];
-    @state() selectedBranchIndex = 0;
-    @state() currentIndex = 0;
+  private eventsService: EventsService;
+  @property({ type: Array }) branches = [
+    {
+      name: 'main',
+      commits: [
+        '0-86b11d1',
+        '2-6e291c3',
+        '4-a36bbe6',
+        '6-6850e62',
+        '9-kadsfcs',
+        '1-9d9c9x1',
+        '2-98xcank',
+        '4-dx9dfnd',
+      ],
+    },
+    {
+      name: 'develop',
+      commits: [
+        '1-d5e2f1a',
+        '3-a7c8bb3',
+        '5-7782cfe',
+        '7-ff9d234',
+      ],
+    },
+    {
+      name: 'release',
+      commits: [
+        'r1-a1b2c3d',
+        'r2-d4e5f6g',
+        'r3-h7i8j9k',
+        'r4-asdasfa',
+        'r5-l0m1n2o',
+        'r6-0238cdj',
+        'r7-jkasdda',
+        'r8-akl2433',
+        'r9-as092ds',
+      ],
+    },
+  ];
+  @state() selectedBranchIndex = 0;
+  @state() currentIndex = 0;
 
-    @state() isEnabled = true;
+  @state() isEnabled = false;
+  @state() onTour = false;
 
-    static styles = css`
+  static styles = css`
       :host {
         display: block;
         position: absolute;
@@ -145,61 +146,70 @@ export class HistoryControl extends LitElement {
       }
     `;
 
-    constructor() {
-      super();
-      this.eventsService = Container.get(EventsService);
-      this.eventsService.on(IVLaPEvents.CONTROL_OPTION_CHANGE, (data) => { 
-            if(data.id == "history"){
-              this.isEnabled = data.value;
-              this.requestUpdate();
-            }
-          });
-    }
-    get currentBranch() {
-      return this.branches[this.selectedBranchIndex]?.commits || [];
-    }
-
-    handleBranchChange(e) {
-      this.selectedBranchIndex = e.target.selectedIndex;
-      this.currentIndex = 0;
-    }
-
-    handleSelect(index) {
-      this.currentIndex = index;
-    }
-
-    handlePrev() {
-      if (this.currentIndex > 0) {
-        this.currentIndex--;
+  constructor() {
+    super();
+    this.eventsService = Container.get(EventsService);
+    this.eventsService.on(IVLaPEvents.CONTROL_OPTION_CHANGE, (data) => {
+      if (data.id == "history") {
+        this.isEnabled = data.value;
+        this.requestUpdate();
       }
-    }
-
-    handleNext() {
-      if (this.currentIndex < this.currentBranch.length - 1) {
-        this.currentIndex++;
+    });
+    this.eventsService.on(IVLaPEvents.HELP_EVENT, (data) => {
+      if (data.type == "start") {
+        this.onTour = true;
       }
+      if (data.type == "end") {
+        this.onTour = false;
+      }
+      this.requestUpdate();
+    });
+  }
+  get currentBranch() {
+    return this.branches[this.selectedBranchIndex]?.commits || [];
+  }
+
+  handleBranchChange(e) {
+    this.selectedBranchIndex = e.target.selectedIndex;
+    this.currentIndex = 0;
+  }
+
+  handleSelect(index) {
+    this.currentIndex = index;
+  }
+
+  handlePrev() {
+    if (this.currentIndex > 0) {
+      this.currentIndex--;
     }
+  }
 
-    render() {
-      const commits = this.currentBranch;
-      const sideCount = 2;
-      const start = Math.max(0, this.currentIndex - sideCount);
-      const end = Math.min(commits.length, this.currentIndex + sideCount + 1);
+  handleNext() {
+    if (this.currentIndex < this.currentBranch.length - 1) {
+      this.currentIndex++;
+    }
+  }
 
-      return html`
-        <div class="control-container" style="display: ${this.isEnabled ? 'flex' : 'none'}">
+  render() {
+    const commits = this.currentBranch;
+    const sideCount = 2;
+    const start = Math.max(0, this.currentIndex - sideCount);
+    const end = Math.min(commits.length, this.currentIndex + sideCount + 1);
+
+    return html`
+        <div class="control-container" style="display: ${this.isEnabled  || this.onTour? 'flex' : 'none'}">
           <select class="branch-selector" @change=${this.handleBranchChange}>
             ${this.branches.map(
-              (branch) => html`<option>${branch.name} - ${branch.commits.length}</option>`
-            )}
+      (branch) => html`<option>${branch.name} - ${branch.commits.length}</option>`
+    )}
           </select>
 
           <div class="pagination">
             <button class="nav-btn" @click=${this.handlePrev}>Prev</button>
             ${commits.slice(start, end).map(
-              (commit, index) => {
-                const actualIndex = start + index;
-                return html`
+      (commit, index) => {
+        const actualIndex = start + index;
+        return html`
                   <button
                     class="commit-button"
                     @click=${() => this.handleSelect(actualIndex)}
@@ -212,11 +222,11 @@ export class HistoryControl extends LitElement {
                     />
                   </button>
                 `;
-              }
-            )}
+      }
+    )}
             <button class="nav-btn" @click=${this.handleNext}>Next</button>
           </div>
         </div>
       `;
-    }
+  }
 }

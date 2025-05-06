@@ -14,7 +14,10 @@ export class PerspectiveControl extends LitElement {
   protected configManager: ConfigManager;
   @state()
   private isEnabled = false;
-  private eventsService:EventsService;
+  @state()
+  private onTour = false;
+
+  private eventsService: EventsService;
 
   static styles = css`
         :host {
@@ -73,12 +76,21 @@ export class PerspectiveControl extends LitElement {
     });
 
     this.eventsService = Container.get(EventsService);
-          this.eventsService.on(IVLaPEvents.CONTROL_OPTION_CHANGE, (data) => { 
-                if(data.id == "perspectives"){
-                  this.isEnabled = data.value;
-                  this.requestUpdate();
-                }
-              });
+    this.eventsService.on(IVLaPEvents.CONTROL_OPTION_CHANGE, (data) => {
+      if (data.id == "perspectives") {
+        this.isEnabled = data.value;
+        this.requestUpdate();
+      }
+    });
+    this.eventsService.on(IVLaPEvents.HELP_EVENT, (data) => {
+      if (data.type == "start") {
+        this.onTour = true;
+      }
+      if (data.type == "end") {
+        this.onTour = false;
+      }
+      this.requestUpdate();
+    });
   }
   handleToggle(index) {
     this.selectedIndex = index;
@@ -96,7 +108,7 @@ export class PerspectiveControl extends LitElement {
   }
   render() {
     return html`
-            <div class="perspective-container" style="display: ${this.isEnabled ? 'flex' : 'none'}">
+            <div class="perspective-container" style="display: ${this.isEnabled || this.onTour ? 'flex' : 'none'}">
               ${this.options?.map((option, index) => html`
                 <button
                   class="perspective-btn ${index === this.selectedIndex ? 'active' : ''}"

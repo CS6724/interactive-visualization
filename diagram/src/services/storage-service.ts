@@ -6,6 +6,7 @@ import { Breadcrumb } from '../components/controls';
 import { Graph } from '@maxgraph/core';
 import { IVLaPEvents } from '../types';
 import { ConfigManager } from './configuration-manager';
+import { EventsService } from './event-service';
 
 /**
  * Provide singlton storage service for the entire package
@@ -19,6 +20,7 @@ import { ConfigManager } from './configuration-manager';
 @Service()
 export class StorageService {
   private dataService: DataService;
+  private eventsService: EventsService;
   private configService: ConfigManager;
 
   /**
@@ -30,26 +32,24 @@ export class StorageService {
   /**
    * A breadcrumb-like data structure for tracking navigation (not yet fully implemented).
    */
-  private breadcrums: Breadcrumb[];
+  private breadcrumbs: Breadcrumb[];
 
   /**
    * A shared `Graph` instance from the `@maxgraph/core` library.
    */
   private graph: Graph;
 
-  /**
-   * A dictionary of event types to arrays of event listeners. Provides a simple 
-   * publish-subscribe mechanism for changes in the service.
-   */
-  private events: { [key: string]: Function[] } = {};
+  private selections = [];
 
+  private currentView = "root";
   /**
    * Initializes the `StorageService` and retrieves the `DataService` instance from the container.
    */
   constructor() {//}, @Inject() private configService:ConfigManager) {
     this.dataService = Container.get(DataService);
     this.configService = Container.get(ConfigManager);
-    this.breadcrums = [];
+    this.eventsService = Container.get(EventsService);
+    this.breadcrumbs = [];
   }
 
   /**
@@ -59,7 +59,7 @@ export class StorageService {
    */
   public setGraph(g: Graph): void {
     this.graph = g;
-    this.emit(IVLaPEvents.GRAPH_CHANGE, this.graph);
+    this.eventsService.emit(IVLaPEvents.GRAPH_CHANGE, this.graph);
   }
 
   /**
@@ -125,20 +125,19 @@ export class StorageService {
   }
 
   public pushBreadcrum(name, url){
-    this.breadcrums.forEach(b=>{b.active = false});
-    this.breadcrums.push({
+    this.breadcrumbs.forEach(b=>{b.active = false});
+    this.breadcrumbs.push({
       id: url,
       label: name,
       active: true,
     })
-    console.log(this.breadcrums);
   }
   
   public getBreadCrumbs(): Breadcrumb[]{
-    return this.breadcrums;
+    return this.breadcrumbs;
   }
-  public setBreadCrumbs(breadcrums: Breadcrumb[]){
-    this.breadcrums = breadcrums;
+  public setBreadCrumbs(breadcrumbs: Breadcrumb[]){
+    this.breadcrumbs = breadcrumbs;
   }
   public diagramLoaded(): boolean {
     //TODO: Setup storage and Check if the diagram exists
@@ -150,9 +149,14 @@ export class StorageService {
    *
    * @param diagram - The diagram to set as the current diagram.
    */
-  public setCurrentDiagram(diagram: UMLDiagram): void {
-    this.diagramData.push(diagram);
-    this.emit(IVLaPEvents.DIAGRAM_CHANGE, diagram);
+  public setCurrentDiagram(diagram: UMLDiagram, inPlace = false): void {
+    if(inPlace && this.diagramData.length>0){
+      this.diagramData[this.diagramData.length-1] = diagram;
+    }else {
+      this.diagramData.push(diagram);
+    }
+    
+    this.eventsService.emit(IVLaPEvents.DIAGRAM_CHANGE, diagram);
   }
 
   /**
@@ -197,7 +201,7 @@ export class StorageService {
     }
     // Potentially remove diagrams after the specified index
     this.diagramData = this.diagramData.slice(0, index + 1);
-    this.emit(IVLaPEvents.DIAGRAM_CHANGE, returnValue);
+    this.eventsService.emit(IVLaPEvents.DIAGRAM_CHANGE, returnValue);
     return returnValue;
   }
 
@@ -228,16 +232,62 @@ export class StorageService {
     }
     return returnValue;
   }
-
+  public getSelected(){
+    return this.selections;
+  }
+  public clearSelections(){
+    if(this.selections.length==0){
+      return;
+    }
+    this.selections = []
+    if(this.getCurrentDiagramType()==="class"){
+      const diagram = this.getCurrentDiagram() as UMLClassDiagram;
+      diagram.classes = diagram.classes.map(c => {
+        if (c.selected) {
+          return { ...c, selected: false };
+        } else {
+          return c;
+        }
+      })
+      this.setCurrentDiagram(diagram,true);
+    }else if(this.getCurrentDiagramType()==="package"){
+      // alert("Not Supported Yet")
+    }else{
+      // alert("Not Supported Yet")
+    }
+  }
   public toggleSelection(id) {
-    // let item = this.getCurrentDiagram().findMember(id);
-    // if (item) {
-    //   console.log(item)
-    //   item.selected = !item.selected;
-    //   this.emit(IVLaPEvents.DIAGRAM_CHANGE, id);
-    // }
+    if(this.selections.includes(id)){
+      this.selections = this.selections.filter((s)=>s!==id)
+    }else{
+      this.selections.push(id)
+    }
+    if(this.getCurrentDiagramType()==="class"){
+      const diagram = this.getCurrentDiagram() as UMLClassDiagram;
+      diagram.classes = diagram.classes.map(c => {
+        if (c.id==id) {
+          return { ...c, selected: !c.selected };
+        } else {
+          return c;
+        }
+      })
+      this.setCurrentDiagram(diagram,true);
+    }else if(this.getCurrentDiagramType()==="package"){
+      alert("Not Supported Yet")
+    }else{
+      alert("Not Supported Yet")
+    }
 
   }
+
+  public getCurrentView(){
+    if (!this.breadcrumbs || this.breadcrumbs.length === 0) {
+      return "root";
+    }
+  
+    return this.breadcrumbs.map(b => b.label).join(".");
+  }
+  
   /**
    * TODO
    */
@@ -258,8 +308,6 @@ export class StorageService {
     // Store in localStorage (or send to backend)
     /// TODO: save per diagram id
     localStorage.setItem('graphLayout', JSON.stringify(layoutData));
-
-    console.log("Layout saved:", layoutData);
   }
 
   public restoreLayout() {
@@ -287,54 +335,5 @@ export class StorageService {
     });
 
     console.log("Layout restored:", parsedData);
-  }
-
-
-
-  /**
-   * Subscribes a listener function to a specific event.
-   *
-   * @param event - The name of the event to listen for (e.g., `GRAPH_CHANGE`, `DIAGRAM_CHANGE`).
-   * @param listener - The callback function to invoke when the event is emitted.
-   *
-   * @example
-   * ```ts
-   * storageService.on(IVLaPEvents.DIAGRAM_CHANGE, (diagram) => {
-   *   console.log('Diagram changed:', diagram);
-   * });
-   * ```
-   */
-  public on(event: string, listener: Function): void {
-    if (!this.events[event]) {
-      this.events[event] = [];
-    }
-    this.events[event].push(listener);
-  }
-
-  /**
-   * Unsubscribes a previously registered listener function from a specific event.
-   *
-   * @param event - The name of the event to stop listening to.
-   * @param listener - The callback function to remove from the event's listener list.
-   */
-  public off(event: string, listener: Function): void {
-    if (!this.events[event]) return;
-    this.events[event] = this.events[event].filter(l => l !== listener);
-  }
-
-  /**
-   * Emits (triggers) a specified event with optional arguments to pass to each subscribed listener.
-   *
-   * @param event - The name of the event to emit.
-   * @param args - Additional arguments to pass to each listener.
-   *
-   * @example
-   * ```ts
-   * storageService.emit(IVLaPEvents.DIAGRAM_CHANGE, currentDiagram);
-   * ```
-   */
-  public emit(event: string, ...args: any[]): void {
-    if (!this.events[event]) return;
-    this.events[event].forEach(listener => listener(...args));
   }
 }

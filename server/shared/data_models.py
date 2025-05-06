@@ -1,4 +1,5 @@
-from typing import List, Optional, Literal
+import json
+from typing import List, Optional, Literal, Any
 from pydantic import BaseModel, Field
 
 class UMLParameter(BaseModel):
@@ -13,7 +14,7 @@ class UMLProperty(BaseModel):
     summary: Optional[str] = Field(None, description="Short description or documentation for the property")
     selected: Optional[bool] = Field(None, description="Indicates if the property is currently selected in the UI")
     dataType: Optional[str] = Field(None, description="The data type of the property (e.g., int, String)")
-    visibility: Optional[Literal["public", "private", "protected", "package"]] = Field(None, description="Access level of the property")
+    visibility: Optional[Literal["public", "private", "protected", "package","default"]] = Field(None, description="Access level of the property")
     isStatic: Optional[bool] = Field(None, description="Indicates whether the property is static")
     isFinal: Optional[bool] = Field(None, description="Indicates whether the property is a constant (final)")
     annotations: Optional[List[str]] = Field(None, description="Annotations or decorators applied to the property")
@@ -68,7 +69,28 @@ class UMLClassDiagram(BaseModel):
     type: Optional[Literal["class", "object", "component", "deployment", "package", "composite"]] = Field(None, description="Type of UML diagram")
     classes: Optional[List[UMLClass]] = Field(default_factory=list, description="List of classes in the diagram")
     relationships: Optional[List[UMLRelationship]] = Field(default_factory=list, description="List of relationships between classes")
+    def to_json(self) -> str:
+        return json.dumps(self, default=lambda o: o.__dict__, indent=2)
+class DuvetRequest(BaseModel):
+    user_query: str
+    project_name: Optional[str] = ""
+    source_db: Optional[str] = ""
+    repository_path: Optional[str] = ""
+    github_url: Optional[str] = ""
+    docs_source: Optional[str] = ""
+    current_diagram: Optional[UMLClassDiagram] = None
+    current_selection: Optional[list[str]] = []
+    current_view: Optional[str] = ""
+    history: Optional[list[Any]] = []
+    attempt: Optional[int] = 0
 
+class DuvetResponse(BaseModel):
+    attempt: Optional[int] = 1
+    message: Optional[str] = ""
+    actions: Optional[list[str]] = ["chat"] # Update, navigate
+    navigateTo: Optional[str] = ""
+    updated_diagram: Optional[UMLClassDiagram] = None
+    
 
 # from langchain.output_parsers import StructuredOutputParser
 

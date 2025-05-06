@@ -76,4 +76,11 @@ npm run serve
 - **LangChain** – Multi-agent LLM pipeline  
 - **LLMs** –  
   - `Qwen2.5` (for testing)  
-  - `deepseek-r1-distill-llama-70b` (main agent)
+  - `deepseek-r1-distill-llama-70b` (hosted on Groq)
+  - `claude-3-7-sonnet-20250219`, `claude-3-5-haiku-20241022` (Anthropic)
+
+
+## Test Questions 
+- What does this project do ?
+- What are the use cases for this project ?
+- What does this class do ?

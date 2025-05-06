@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+load_dotenv()
 # from server.agents.code_information import create_code_subgraph
 # from server.agents.diagram_response import diagram_response_node
 

@@ -16,7 +16,6 @@ def safe_parse_json(text: str):
         return json.loads(json_str)
     except Exception as e:
         return {
-            "chat_response": True,
             "diagram_response": False,
             "navigation_response": False
         }
@@ -46,8 +45,6 @@ def response_supervisor_node(state: State) -> State:
     result = chain.invoke(input_data)
     parsed = safe_parse_json(result)
 
-    state["should_run_chat"] = parsed.get("chat_response", False)
     state["should_run_diagram"] = parsed.get("diagram_response", False)
     state["should_run_navigation"] = parsed.get("navigation_response", False)
-
     return state

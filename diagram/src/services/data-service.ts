@@ -16,7 +16,6 @@ export class DataService {
         }else {
             url = `${this.base_url}/data`;
         }
-        console.log(`Loading: ${url}`)
         try {
             // Fetch data from the endpoint
             const response = await fetch(url, {

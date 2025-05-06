@@ -23,9 +23,16 @@ def safe_parse_json(text: str):
         return {}
 
 def information_supervisor_node(state: State) -> State:
+
+    project_name_msg = state.get("project_name")
+    project_name = project_name_msg.content if isinstance(project_name_msg, HumanMessage) else "unknown"
+    original_diagram = state.get("original_diagram", None)
+    class_list = ""
+    if original_diagram:
+        for c in original_diagram[-1].classes:
+            class_list += "," + c.name
     input_vars = {
         "user_query": state.get("user_query", []),
-        "context": state.get("context", []),
         "source_query": state.get("source_query", []),
         "git_query": state.get("git_query", []),
         "github_query": state.get("github_query", []),
@@ -33,7 +40,10 @@ def information_supervisor_node(state: State) -> State:
         "source_response": state.get("source_response", []),
         "git_response": state.get("git_response", []),
         "github_response": state.get("github_response", []),
-        "docs_response": state.get("docs_response", [])
+        "docs_response": state.get("docs_response", []),
+        "context": [ f"Project Name: {project_name}",
+                    *(msg.content if isinstance(msg, HumanMessage) else str(msg) for msg in state.get("context", [])),
+                    "User is viewing the diagram with the following classes: \n" +class_list]
     }
 
     chain = prompt | llm | RunnableLambda(lambda msg: msg.content if isinstance(msg, BaseMessage) else msg)
@@ -50,8 +60,6 @@ def information_supervisor_node(state: State) -> State:
             state["github_query"] = [HumanMessage(content=parsed["github"])]
         if parsed.get("docs", "PASS") != "PASS" and not state.get("docs_response"):
             state["docs_query"] = [HumanMessage(content=parsed["docs"])]
-
     # Add supervisor LLM output for debugging or transparency
     state["supervisor_response"] = [AIMessage(content=str(parsed))]
-
     return state

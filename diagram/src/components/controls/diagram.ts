@@ -160,11 +160,12 @@ export class DiagramControl extends LitElement {
   async firstUpdated() {
     ///TODO: read from local storage, if the options exist
     this.options = [
-      { id: 'history', label: 'History', info: 'Show version history controls', selected: true, editable: true },
+      { id: 'history', label: 'History', info: 'Show version history controls', selected: false, editable: true },
       { id: 'navigation', label: 'Navigation', info: 'Show navigation controls', selected: true, editable: true },
       { id: 'chat', label: 'Chat', info: 'Enable chat', selected: true, editable: true },
       { id: 'breadcrumb', label: 'Breadcrumb', info: 'Show breadcrumb controls', selected: false, editable: true },
       { id: 'perspectives', label: 'Perspectives', info: 'Show perspectives controls', selected: false, editable: true },
+      { id: 'tour', label: 'Help', info: 'Show start guided tour control', selected: true, editable: true },
     ];
   }
 

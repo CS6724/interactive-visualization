@@ -3,8 +3,8 @@ from langchain_core.messages import AIMessage, HumanMessage
 # from langchain_ollama import ChatOllama
 from langgraph.graph.message import add_messages
 from shared import State
-from server.agents.information import create_information_subgraph
-from server.agents.response import create_response_subgraph
+from agents.information import create_information_subgraph
+from agents.response import create_response_subgraph
 from agents.supervisor import supervisor_node
 
 
@@ -24,11 +24,12 @@ graph = workflow.compile()
 def main(query="Which classes are interfaces?"):
     from sample_data import keycloak_data
     return graph.invoke({
-            # "original_diagram": keycloak_data,
+            "project_name": "keycloak",
             "user_query": [HumanMessage(query)],
             "source_db": "uml-data",
             "repository_path": "/Users/yoseph/Work/Personal/keycloak",
-            "github_url": "keycloak/keycloak"
+            "github_url": "keycloak/keycloak",
+            "docs_source": "https://www.keycloak.org/documentation"
             })
 
 if __name__ == "__main__":

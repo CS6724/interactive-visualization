@@ -35,7 +35,7 @@ export class UMLClassElement extends UMLElement {
     }
     private static generateMethod(method: UMLMethod) {
         let return_value = `<div class="uml-method ${method.selected? method.selected:''} " ${method.style? "style='"+ method.style+"'":''} ${method.domId? "id='"+ method.domId+"'":''}><span class='data-type' >${method.returnType ? method.returnType + " " : ""}</span>${method.name}(`;
-        method.parameters.forEach((p) => {
+        method.parameters?.forEach((p) => {
             return_value += `<span class='data-type' >${p.dataType}</span>, `;
         });
         return_value = return_value.endsWith(", ") ? return_value.slice(0, return_value.length - 2) : return_value;

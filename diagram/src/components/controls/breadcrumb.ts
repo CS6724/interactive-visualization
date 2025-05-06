@@ -15,6 +15,8 @@ export class BreadcrumbControl extends LitElement {
   compact: boolean = false;
   @state()
   private isEnabled = false;
+  @state()
+  private onTour = false;
 
   protected configManager: ConfigManager;
   private storageService: StorageService;
@@ -82,8 +84,7 @@ export class BreadcrumbControl extends LitElement {
     this.storageService = Container.get(StorageService);
     this.eventsService = Container.get(EventsService);
     this.diagramService = Container.get(DiagramService);
-    this.storageService.on(IVLaPEvents.DIAGRAM_CHANGE, ()=>{
-      console.log("Breadcrum loaded:"+ this.storageService.getBreadCrumbs())
+    this.eventsService.on(IVLaPEvents.DIAGRAM_CHANGE, ()=>{
       this.crumbs = this.storageService.getBreadCrumbs();
       this.requestUpdate();
     })
@@ -92,6 +93,16 @@ export class BreadcrumbControl extends LitElement {
         this.isEnabled = data.value;
         this.requestUpdate();
       }
+    });
+    
+    this.eventsService.on(IVLaPEvents.HELP_EVENT, (data) => { 
+      if(data.id == "tour-ended") {
+        this.onTour = true;
+      }
+      if(data.id == "tour-started") {
+        this.onTour = false;
+      }
+      this.requestUpdate();
     });
     
   }
@@ -123,7 +134,7 @@ export class BreadcrumbControl extends LitElement {
 
   render(): TemplateResult {
     return html`
-      <div class="breadcrumb-container ${this.compact ? 'compact' : ''}"  style="display: ${this.isEnabled ? 'flex' : 'none'}">
+      <div class="breadcrumb-container ${this.compact ? 'compact' : ''}"  style="display: ${this.isEnabled || this.onTour ? 'flex' : 'none'}">
         ${this.crumbs?.map((crumb, index) => html`
           ${index > 0 ? html`<span class="separator">›</span>` : ''}
           <span 
